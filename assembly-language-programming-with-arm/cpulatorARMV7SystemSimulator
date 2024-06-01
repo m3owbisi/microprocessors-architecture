@@ -1,0 +1,132 @@
+.global _start
+.equ endlist,0xaaaaaaaa
+.equ switch,0xff200040
+.equ led,0xff200000
+_start:	
+	MOV R0,#30
+	MOV R0,#0X0A
+	MOV R7,#1
+	SWI 0
+	MOV R0,#5
+	MOV R1,R0
+	//		LDR
+			LDR R0,=list
+			LDR R1,[R0] 	// list=[4,5,-9,1,0,2,-3]
+			LDR R2,[R0,#4] 	// list[i] => list[R0] -> list[R0+1]	post-increment
+			LDR R2,[R0,#4]!	// R0+1 list[R0]	pre-increment
+			LDR R2,[R0],#4	// list[R0] R0+1
+	//		ADD
+	//		SUB
+	//		MUL
+			MOV R0,#5
+			MOV R1,#7
+			ADD R2,R0,R1	// R2=R0+R1
+			SUB R2,R0,R1	// R2=R0-R1
+			MUL R2,R0,R1	// R2=R0XR1
+			MOV R0,#0XFFFFFFFF
+			MOV R1,#1
+			SUB R2,R0,R1
+			SUBS R2,R0,R1
+			MOV R0,#0XFFFFFFFF
+			MOV R1,#3
+			ADDS R2,R0,R1
+	//		ADC
+			ADC R2,R0,R1
+	//		R2=R0+R1+CY (carry)
+			AND R0,R1,R2	// R0=R1 && R2 = 16
+			MOV R0,#0XFF
+			MOV R1,#22
+			AND R2,R0,R1
+			ANDS R2,R0,R1
+			ORR R2,R0,R1	// R0=R1 || R2 = FF
+			EOR R2,R0,R1	// E9
+			MVN R0,R0		// 00 -> FF
+			MOV R0,#0XFF	//0xAA
+			MVN R0,R0
+			AND R0,R0,#0X000000FF
+	//		LSL 	LSR
+			MOV R0,#10
+			LSL R0,#1
+			LSR R0,#1
+			ROR R0,#1	// #15
+			MOV R0,#10
+			MOV R1,R0,LSL #1
+			LSL R1,#1
+			MOV R0,#1	// #3
+			MOV R1,#2
+			CMP R0,R1	// R0-R1
+			BGT greater
+			MOV R2,#1
+			BAL default
+	//		BGE
+	//		BLT
+	//		BLE
+	//		BEQ
+	//		BNE
+			LDR R0,=list
+			LDR R3,=endlist
+			LDR R1,[R0]
+			ADD R2,R2,R1			
+			MOV R0,#2
+			MOV R1,#4
+			CMP R0,R1	// R1,R0
+			BLT addR
+			BAL exit
+			ADDLT R2,#1
+			MOVGE R2,#5
+			MOV R0,#1
+			MOV R1,#3
+			BAL add2
+			MOV R3,#4
+	//		BL
+			MOV R0,#1
+			MOV R1,#3
+			BL get_value
+			PUSH {R0,R1}
+			POP {R0,R1}	// POP {R9,R0,R1}
+			B _end
+			LDR R0,=switch
+			LDR R1,[R0]	// =2
+			LDR R0,=led
+			STR R1,[R0]
+	// $ nano hello_world.s
+			MOV R0,#1	// #0,#2
+			LDR R1,=message
+			LDR R2,=len
+			MOV R7,#4
+			SWI 0
+			MOV R7,#1
+			SWI 0
+			
+	.data
+		list:
+			.word 4,5,-9,1,0,2,-3
+			.word 1,2,3,4,5,6,7,8,9,10
+		greater:
+			MOV R2,#1
+		default:
+			MOV R2,#2
+		loop:
+			LDR R1,[R0,#4]!
+			CMP R1,R3
+			BEQ exit
+			ADD R2,R2,R1
+		exit:		
+			BAL loop
+		addR:
+			ADD R2,#11
+		add2:
+			ADD R2,R0,R1
+		get_value:
+			MOV R0,#5
+			MOV R1,#7
+			ADD R2,R0,R1
+			BX lr
+		_end:
+			PUSH {R2}
+		message:
+			.ascii
+			.asciz
+			.string
+			"hello world \n"
+	//		len=._message
